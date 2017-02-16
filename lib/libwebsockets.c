@@ -916,6 +916,12 @@ lws_callback_vhost_protocols(struct lws *wsi, int reason, void *in, int len)
 	return 0;
 }
 
+LWS_VISIBLE LWS_EXTERN void
+lws_set_fops(struct lws_context *context, struct lws_plat_file_ops *fops)
+{
+	memcpy(&context->fops, fops, sizeof *fops);
+}
+
 /**
  * lws_now_secs() - seconds since 1970-1-1
  *

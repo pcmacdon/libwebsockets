@@ -4290,7 +4290,8 @@ struct lws_plat_file_ops {
  */
 LWS_VISIBLE LWS_EXTERN struct lws_plat_file_ops * LWS_WARN_UNUSED_RESULT
 lws_get_fops(struct lws_context *context);
-
+LWS_VISIBLE LWS_EXTERN void
+lws_set_fops(struct lws_context *context, struct lws_plat_file_ops *fops);
 /**
  * lws_plat_file_open() - file open operations
  *

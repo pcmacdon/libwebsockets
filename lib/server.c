@@ -42,6 +42,7 @@ lws_context_init_server(struct lws_context_creation_info *info,
 	struct lws *wsi;
 	int m = 0;
 
+	(void)opt;
 	/* set up our external listening socket we serve on */
 
 	if (info->port == CONTEXT_PORT_NO_LISTEN || info->port == CONTEXT_PORT_NO_LISTEN_SERVER)
@@ -96,12 +97,13 @@ lws_context_init_server(struct lws_context_creation_info *info,
 		return 1;
 	}
 
-#if LWS_POSIX
+#if LWS_POSIX && !defined(LWS_WITH_ESP32)
 	/*
 	 * allow us to restart even if old sockets in TIME_WAIT
 	 */
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&opt, sizeof(opt)) < 0) {
+		lwsl_err("reuseaddr failed\n");
 		compatible_close(sockfd);
 		return 1;
 	}
@@ -130,7 +132,7 @@ lws_context_init_server(struct lws_context_creation_info *info,
 #endif
 	lws_plat_set_socket_options(vhost, sockfd);
 
-#if LWS_POSIX
+#if LWS_POSIX && !defined(LWS_WITH_ESP32)
 	n = lws_socket_bind(vhost, sockfd, info->port, info->iface);
 	if (n < 0)
 		goto bail;

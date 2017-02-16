@@ -523,8 +523,10 @@ lws_create_vhost(struct lws_context *context,
 		goto bail;
 	if (lws_context_init_client_ssl(info, vh))
 		goto bail;
-	if (lws_context_init_server(info, vh))
+	if (lws_context_init_server(info, vh)) {
+		lwsl_err("init server failed\n");
 		goto bail;
+	}
 
 	while (1) {
 		if (!(*vh1)) {
