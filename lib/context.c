@@ -586,7 +586,7 @@ lws_create_context(struct lws_context_creation_info *info)
 #else
 	lwsl_notice("IPV6 not compiled in\n");
 #endif
-#ifndef LWS_PLAT_OPTEE
+#if !defined(LWS_PLAT_OPTEE) && !defined(LWS_PLAT_ESP32)
 	lws_feature_status_libev(info);
 	lws_feature_status_libuv(info);
 #endif

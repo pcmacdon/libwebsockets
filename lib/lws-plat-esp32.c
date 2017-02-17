@@ -105,8 +105,38 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 			timeout_ms = 0;
 	}
 
-	n = 0;
 //	n = poll(pt->fds, pt->fds_count, timeout_ms);
+	{
+		fd_set readfds, writefds, errfds;
+		struct timeval tv = { timeout_ms / 1000,
+				      (timeout_ms % 1000) * 1000 };
+		int max_fd = 0;
+		FD_ZERO(&readfds);
+		FD_ZERO(&writefds);
+		FD_ZERO(&errfds);
+
+		for (n = 0; n < pt->fds_count; n++) {
+			pt->fds[n].revents = 0;
+			if (pt->fds[n].fd >= max_fd)
+				max_fd = pt->fds[n].fd;
+			if (pt->fds[n].events & LWS_POLLIN)
+				FD_SET(pt->fds[n].fd, &readfds);
+			if (pt->fds[n].events & LWS_POLLOUT)
+				FD_SET(pt->fds[n].fd, &writefds);
+			FD_SET(pt->fds[n].fd, &errfds);
+		}
+
+		n = select(max_fd + 1, &readfds, &writefds, &errfds, &tv);
+		for (n = 0; n < pt->fds_count; n++) {
+			if (FD_ISSET(pt->fds[n].fd, &readfds))
+				pt->fds[n].revents |= LWS_POLLIN;
+			if (FD_ISSET(pt->fds[n].fd, &writefds))
+				pt->fds[n].revents |= LWS_POLLOUT;
+			if (FD_ISSET(pt->fds[n].fd, &errfds))
+				pt->fds[n].revents |= LWS_POLLHUP;
+		}
+	}
+
 
 #ifdef LWS_OPENSSL_SUPPORT
 	if (!pt->rx_draining_ext_list &&

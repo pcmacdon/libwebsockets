@@ -96,7 +96,7 @@ lws_context_init_server(struct lws_context_creation_info *info,
 		lwsl_err("ERROR opening socket\n");
 		return 1;
 	}
-
+lwsl_notice("listening socket %d\n", sockfd);
 #if LWS_POSIX && !defined(LWS_WITH_ESP32)
 	/*
 	 * allow us to restart even if old sockets in TIME_WAIT
@@ -132,7 +132,7 @@ lws_context_init_server(struct lws_context_creation_info *info,
 #endif
 	lws_plat_set_socket_options(vhost, sockfd);
 
-#if LWS_POSIX && !defined(LWS_WITH_ESP32)
+#if LWS_POSIX
 	n = lws_socket_bind(vhost, sockfd, info->port, info->iface);
 	if (n < 0)
 		goto bail;
@@ -353,7 +353,7 @@ lws_http_serve(struct lws *wsi, char *uri, const char *origin,
 
 	lws_snprintf(path, sizeof(path) - 1, "%s/%s", origin, uri);
 
-#if !defined(_WIN32_WCE) && !defined(LWS_WITH_ESP8266)
+#if !defined(_WIN32_WCE) && !defined(LWS_WITH_ESP8266) && !defined(LWS_WITH_ESP32)
 	do {
 		spin++;
 
@@ -1704,7 +1704,7 @@ lws_adopt_socket_vhost(struct lws_vhost *vh, lws_sockfd_type accept_fd)
 		return NULL;
 	}
 
-	//lwsl_notice("%s: new wsi %p, sockfd %d, cb %p\n", __func__, new_wsi, accept_fd, context->vhost_list->protocols[0].callback);
+	lwsl_notice("%s: new wsi %p, sockfd %d, cb %p\n", __func__, new_wsi, accept_fd, context->vhost_list->protocols[0].callback);
 
 	new_wsi->sock = accept_fd;
 
