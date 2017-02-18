@@ -339,7 +339,7 @@ lws_http_serve(struct lws *wsi, char *uri, const char *origin,
 	const struct lws_protocol_vhost_options *pvo = m->interpret;
 	struct lws_process_html_args args;
 	const char *mimetype;
-#if !defined(_WIN32_WCE) && !defined(LWS_WITH_ESP8266)
+#if !defined(_WIN32_WCE) && !defined(LWS_WITH_ESP8266) && !defined(LWS_WITH_ESP32)
 	struct stat st;
 	int spin = 0;
 #endif
@@ -1508,7 +1508,7 @@ upgrade_ws:
 		}
 		wsi->u.ws.rx_ubuf_alloc = n;
 		lwsl_debug("Allocating RX buffer %d\n", n);
-#if LWS_POSIX
+#if LWS_POSIX && !defined(LWS_WITH_ESP32)
 		if (setsockopt(wsi->sock, SOL_SOCKET, SO_SNDBUF,
 			       (const char *)&n, sizeof n)) {
 			lwsl_warn("Failed to set SNDBUF to %d", n);
