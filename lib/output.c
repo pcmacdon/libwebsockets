@@ -198,7 +198,7 @@ handle_truncated_send:
 	 * Newly truncated send.  Buffer the remainder (it will get
 	 * first priority next time the socket is writable)
 	 */
-	lwsl_notice("%p new partial sent %d from %lu total\n", wsi, n,
+	lwsl_info("%p new partial sent %d from %lu total\n", wsi, n,
 		    (unsigned long)real_len);
 
 	/*

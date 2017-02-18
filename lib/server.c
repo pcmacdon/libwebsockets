@@ -96,7 +96,6 @@ lws_context_init_server(struct lws_context_creation_info *info,
 		lwsl_err("ERROR opening socket\n");
 		return 1;
 	}
-lwsl_notice("listening socket %d\n", sockfd);
 #if LWS_POSIX && !defined(LWS_WITH_ESP32)
 	/*
 	 * allow us to restart even if old sockets in TIME_WAIT
@@ -1591,7 +1590,7 @@ lws_create_new_server_wsi(struct lws_vhost *vhost)
 	}
 
 	new_wsi->tsi = n;
-	lwsl_notice("Accepted wsi %p to context %p, tsi %d\n", new_wsi,
+	lwsl_debug("Accepted wsi %p to context %p, tsi %d\n", new_wsi,
 		    vhost->context, new_wsi->tsi);
 
 	new_wsi->vhost = vhost;
@@ -1704,7 +1703,8 @@ lws_adopt_socket_vhost(struct lws_vhost *vh, lws_sockfd_type accept_fd)
 		return NULL;
 	}
 
-	lwsl_notice("%s: new wsi %p, sockfd %d, cb %p\n", __func__, new_wsi, accept_fd, context->vhost_list->protocols[0].callback);
+	lwsl_debug("%s: new wsi %p, sockfd %d, cb %p\n", __func__, new_wsi,
+		   accept_fd, context->vhost_list->protocols[0].callback);
 
 	new_wsi->sock = accept_fd;
 

@@ -126,7 +126,7 @@ lws_vhost_protocol_options(struct lws_vhost *vh, const char *name)
  * inform every vhost that hasn't already done it, that
  * his protocols are initializing
  */
-int
+LWS_VISIBLE int
 lws_protocol_init(struct lws_context *context)
 {
 	struct lws_vhost *vh = context->vhost_list;
@@ -323,9 +323,9 @@ lws_create_vhost(struct lws_context *context,
 	const struct lws_protocol_vhost_options *pvo;
 #ifdef LWS_WITH_PLUGINS
 	struct lws_plugin *plugin = context->plugin_list;
+#endif
 	struct lws_protocols *lwsp;
 	int m, f = !info->pvo;
-#endif
 #ifdef LWS_HAVE_GETENV
 	char *p;
 #endif
@@ -357,29 +357,31 @@ lws_create_vhost(struct lws_context *context,
 	else
 		vh->keepalive_timeout = 5;
 
+	/*
+	 * give the vhost a unified list of protocols including the
+	 * ones that came from plugins
+	 */
+	lwsp = lws_zalloc(sizeof(struct lws_protocols) *
+				   (vh->count_protocols +
+				   context->plugin_protocol_count + 1));
+	if (!lwsp) {
+		lwsl_err("OOM\n");
+		return NULL;
+	}
+
+	m = vh->count_protocols;
+	memcpy(lwsp, info->protocols, sizeof(struct lws_protocols) * m);
+
+	/* for compatibility, all protocols enabled on vhost if only
+	 * the default vhost exists.  Otherwise only vhosts who ask
+	 * for a protocol get it enabled.
+	 */
+
+	if (info->options & LWS_SERVER_OPTION_EXPLICIT_VHOSTS)
+		f = 0;
+	(void)f;
 #ifdef LWS_WITH_PLUGINS
 	if (plugin) {
-		/*
-		 * give the vhost a unified list of protocols including the
-		 * ones that came from plugins
-		 */
-		lwsp = lws_zalloc(sizeof(struct lws_protocols) *
-					   (vh->count_protocols +
-					   context->plugin_protocol_count + 1));
-		if (!lwsp)
-			return NULL;
-
-		m = vh->count_protocols;
-		memcpy(lwsp, info->protocols,
-		       sizeof(struct lws_protocols) * m);
-
-		/* for compatibility, all protocols enabled on vhost if only
-		 * the default vhost exists.  Otherwise only vhosts who ask
-		 * for a protocol get it enabled.
-		 */
-
-		if (info->options & LWS_SERVER_OPTION_EXPLICIT_VHOSTS)
-			f = 0;
 
 		while (plugin) {
 			for (n = 0; n < plugin->caps.count_protocols; n++) {
@@ -398,9 +400,12 @@ lws_create_vhost(struct lws_context *context,
 			}
 			plugin = plugin->list;
 		}
-		vh->protocols = lwsp;
-	} else
+	}
 #endif
+
+	if (info->options & LWS_SERVER_OPTION_EXPLICIT_VHOSTS)
+		vh->protocols = lwsp;
+	else
 		vh->protocols = info->protocols;
 
 	vh->same_vh_protocol_list = (struct lws **)

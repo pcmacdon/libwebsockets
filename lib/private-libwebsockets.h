@@ -978,7 +978,7 @@ LWS_EXTERN void lws_feature_status_libev(struct lws_context_creation_info *info)
 #define lws_libev_run(_a, _b) ((void) 0)
 #define lws_libev_destroyloop(_a, _b) ((void) 0)
 #define LWS_LIBEV_ENABLED(context) (0)
-#if LWS_POSIX
+#if LWS_POSIX && !defined(LWS_WITH_ESP32)
 #define lws_feature_status_libev(_a) \
 			lwsl_notice("libev support not compiled in\n")
 #else
@@ -1008,7 +1008,7 @@ LWS_EXTERN void lws_feature_status_libuv(struct lws_context_creation_info *info)
 #define lws_libuv_run(_a, _b) ((void) 0)
 #define lws_libuv_destroyloop(_a, _b) ((void) 0)
 #define LWS_LIBUV_ENABLED(context) (0)
-#if LWS_POSIX
+#if LWS_POSIX && !defined(LWS_WITH_ESP32)
 #define lws_feature_status_libuv(_a) \
 			lwsl_notice("libuv support not compiled in\n")
 #else

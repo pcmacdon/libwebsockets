@@ -554,9 +554,20 @@ struct pollfd {
 #define POLLHUP		0x0010
 #define POLLNVAL	0x0020
 
-typedef void * uv_timer_t;
+#include "freertos/timers.h"
+
+#if !defined(CONFIG_FREERTOS_HZ)
+#define CONFIG_FREERTOS_HZ 100
+#endif
+
+typedef TimerHandle_t uv_timer_t;
 typedef void uv_cb_t(uv_timer_t *);
 typedef void * uv_handle_t;
+
+struct timer_mapping {
+	uv_cb_t *cb;
+	uv_timer_t *t;
+};
 
 #define UV_VERSION_MAJOR 1
 
@@ -565,27 +576,35 @@ typedef void * uv_handle_t;
 static inline void uv_timer_init(void *l, uv_timer_t *t)
 {
 	(void)l;
-//	memset(t, 0, sizeof(*t));
-//	os_timer_disarm(t);
+	*t = NULL;
 }
+
+extern void esp32_uvtimer_cb(TimerHandle_t t);
 
 static inline void uv_timer_start(uv_timer_t *t, uv_cb_t *cb, int first, int rep)
 {
-	(void)t; (void)cb; (void)first; (void)rep;
-//	os_timer_setfn(t, (os_timer_func_t *)cb, t);
-	/* ms, repeat */
-//	os_timer_arm(t, first, !!rep);
+	struct timer_mapping *tm = malloc(sizeof(*tm));
+
+	if (!tm)
+		return;
+
+	tm->t = t;
+	tm->cb = cb;
+
+	*t = xTimerCreate("x", pdMS_TO_TICKS(first), !!rep, tm,
+			  (TimerCallbackFunction_t)esp32_uvtimer_cb);
+	xTimerStart(*t, 0);
 }
 
 static inline void uv_timer_stop(uv_timer_t *t)
 {
-	(void)t;
-//	os_timer_disarm(t);
+	xTimerStop(*t, 0);
 }
 
 static inline void uv_close(uv_handle_t *h, void *v)
 {
-	(void)h; (void)v;
+	free(pvTimerGetTimerID((uv_timer_t)h));
+	xTimerDelete(*(uv_timer_t *)h, 0);
 }
 
 
@@ -1489,6 +1508,9 @@ lws_protocol_vh_priv_get(struct lws_vhost *vhost, const struct lws_protocols *pr
  */
 LWS_VISIBLE LWS_EXTERN int
 lws_finalize_startup(struct lws_context *context);
+
+LWS_VISIBLE LWS_EXTERN int
+lws_protocol_init(struct lws_context *context);
 
 #ifdef LWS_WITH_PLUGINS
 

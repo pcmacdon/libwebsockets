@@ -1,5 +1,5 @@
 #include "private-libwebsockets.h"
-
+#include "freertos/timers.h"
 
 /*
  * included from libwebsockets.c for unix builds
@@ -489,3 +489,12 @@ lws_plat_init(struct lws_context *context,
 
 	return 0;
 }
+
+
+LWS_VISIBLE void esp32_uvtimer_cb(TimerHandle_t t)
+{
+	struct timer_mapping *p = pvTimerGetTimerID(t);
+
+	p->cb(p->t);
+}
+
